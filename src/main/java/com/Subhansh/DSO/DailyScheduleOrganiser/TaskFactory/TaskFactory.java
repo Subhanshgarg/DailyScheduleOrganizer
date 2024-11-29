@@ -1,6 +1,7 @@
 package com.Subhansh.DSO.DailyScheduleOrganiser.TaskFactory;
 
 import com.Subhansh.DSO.DailyScheduleOrganiser.Entity.Task;
+import com.Subhansh.DSO.DailyScheduleOrganiser.Entity.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -9,7 +10,7 @@ import java.time.LocalTime;
 @Component
 public class TaskFactory {
 
-    public Task createTask(String description, LocalTime startTime, LocalTime endTime, int priority, LocalDate date) {
-        return new Task(description, date, startTime,endTime,priority);
+    public Task createTask(String description, LocalTime startTime, LocalTime endTime, int priority, LocalDate date, User user) {
+        return new Task(description, date, startTime,endTime,priority,user);
     }
 }

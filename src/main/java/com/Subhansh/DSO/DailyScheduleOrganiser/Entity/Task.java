@@ -1,9 +1,6 @@
 package com.Subhansh.DSO.DailyScheduleOrganiser.Entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -31,11 +28,17 @@ public class Task {
 
     private int priority;
 
-    public Task(String description, LocalDate date, LocalTime startTime, LocalTime endTime, int priority) {
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false) // Foreign key to User table
+    private User user;
+
+    public Task(String description, LocalDate date, LocalTime startTime, LocalTime endTime, int priority, User user) {
         this.description = description;
         this.date = date;
         this.startTime = startTime;
         this.endTime = endTime;
         this.priority = priority;
+        this.user=user;
     }
+
 }

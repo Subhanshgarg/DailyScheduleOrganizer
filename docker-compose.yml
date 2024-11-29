@@ -1,0 +1,29 @@
+version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/taskdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update  # Ensures database schema is updated
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+
+  db:
+    image: mysql:8.4.2  # You can use the specific version
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword     # Set your root password here
+      MYSQL_DATABASE: taskdb          # Database name to create
+      MYSQL_USER: user                        # Custom user
+      MYSQL_PASSWORD: user_password           # Password for the custom user
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql  # Persist MySQL data
+volumes:
+  mysql-data:

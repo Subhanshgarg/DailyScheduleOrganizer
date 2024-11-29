@@ -4,8 +4,10 @@ import com.Subhansh.DSO.DailyScheduleOrganiser.DTO.TaskRequest;
 import com.Subhansh.DSO.DailyScheduleOrganiser.DTO.TaskResponse;
 import com.Subhansh.DSO.DailyScheduleOrganiser.DTO.UpdatetaskRequestDTO;
 import com.Subhansh.DSO.DailyScheduleOrganiser.Entity.Task;
+import com.Subhansh.DSO.DailyScheduleOrganiser.Entity.User;
 import com.Subhansh.DSO.DailyScheduleOrganiser.Exception.TaskNotFoundException;
 import com.Subhansh.DSO.DailyScheduleOrganiser.Repository.TaskRepository;
+import com.Subhansh.DSO.DailyScheduleOrganiser.Repository.UserRepository;
 import com.Subhansh.DSO.DailyScheduleOrganiser.TaskFactory.TaskFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,24 +17,28 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TaskService {
     private final TaskFactory taskFactory;
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
     private static final Logger log = LoggerFactory.getLogger(TaskService.class);
 
     @Transactional
-    public String addTask(TaskRequest taskRequest, LocalDate date) {
+    public String addTask(TaskRequest taskRequest, LocalDate date, String username) {
         log.info("Request to add task: {}", taskRequest);
-
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Task task = taskFactory.createTask(
                 taskRequest.getDescription(),
                 taskRequest.getStartTime(),
                 taskRequest.getEndTime(),
                 taskRequest.getPriority(),
-                taskRequest.getDate()
+                taskRequest.getDate(),
+                user
         );
 
         List<Task> inDateTaskList = taskRepository.findByDate(date);
@@ -66,13 +72,17 @@ public class TaskService {
         }
     }
 
-    public List<TaskResponse> findAllTaskForParticularDate(LocalDate date) {
-        log.info("Fetching all tasks for date: {}", date);
-        List<Task> taskList = taskRepository.findByDate(date);
-        return taskList.stream().map(this::mapToTaskResponse).toList();
+    public List<TaskResponse> findAllTaskForParticularDate(LocalDate date, String username) {
+        log.info("Fetching tasks for user: {} on date: {}", username, date);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Fetch tasks associated with the user and the specific date
+        List<Task> taskList = taskRepository.findByDateAndUser(date, user);
+        return taskList.stream().map(this::mapToTaskResponse).collect(Collectors.toList());
     }
 
-    private TaskResponse mapToTaskResponse(Task task) {
+    public TaskResponse mapToTaskResponse(Task task) {
         return TaskResponse.builder()
                 .id(task.getId())
                 .description(task.getDescription())
@@ -83,19 +93,25 @@ public class TaskService {
                 .build();
     }
 
-    public TaskResponse updateTask(LocalDate date, int id, UpdatetaskRequestDTO updatetaskRequestDTO) {
+    public TaskResponse updateTask(LocalDate date, int id, UpdatetaskRequestDTO updatetaskRequestDTO, String username) {
         log.info("Updating task with ID: {} for date: {}", id, date);
+
+        // Fetch the user based on the username (logged-in user)
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Fetch tasks for the provided date
         List<Task> taskDatedForProvidedDate = taskRepository.findByDate(date);
 
         if (taskDatedForProvidedDate.isEmpty()) {
             throw new TaskNotFoundException("No tasks found for the provided date: " + date);
         }
 
-        // Find the task by ID
+        // Find the task by ID and ensure the logged-in user is the one who created the task
         Task taskToBeUpdated = taskDatedForProvidedDate.stream()
-                .filter(task -> task.getId() == id)
+                .filter(task -> task.getId()==id && task.getUser().getId().equals(user.getId()))
                 .findFirst()
-                .orElseThrow(() -> new TaskNotFoundException("Task not found for the given ID: " + id));
+                .orElseThrow(() -> new TaskNotFoundException("Task not found for the given ID or user: " + id));
 
         // Update only the fields that are present in the DTO
         updatetaskRequestDTO.getDate().ifPresent(taskToBeUpdated::setDate);
@@ -112,9 +128,12 @@ public class TaskService {
         return mapToTaskResponse(taskToBeUpdated);
     }
 
-    public String deleteTask(LocalDate date, int id) {
+    @Transactional
+    public String deleteTask(LocalDate date, int id, String username) {
         log.info("Deleting task with ID: {} for date: {}", id, date);
-        List<Task> taskListWithGivenDate = taskRepository.findByDate(date);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        List<Task> taskListWithGivenDate = taskRepository.findByDateAndUser(date, user);
         if (taskListWithGivenDate.isEmpty()) {
             throw new TaskNotFoundException("No tasks found for the provided date: " + date);
         } else {
