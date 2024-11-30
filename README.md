@@ -138,27 +138,7 @@ The **JWT (JSON Web Token)** flow is used for authentication and authorization i
 
 ### JWT Flow Sequence Diagram
 
-```plaintext
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant DB as Database
-
-    C->>S: POST /api/auth/login (username, password)
-    S->>DB: Validate credentials (username, password)
-    DB-->>S: Return user data (valid/invalid)
-    S->>C: Generate JWT and send it back
-    C->>C: Store JWT in localStorage or sessionStorage
-
-    C->>S: GET /some-protected-resource (Authorization: Bearer <JWT>)
-    S->>S: Validate JWT (check signature and expiration)
-    S->>DB: Fetch requested data (if token is valid)
-    DB-->>S: Return data
-    S->>C: Return the requested data
-
-    C->>S: GET /some-protected-resource (Authorization: Bearer <invalidJWT>)
-    S->>S: Validate JWT (invalid or expired)
-    S->>C: Return error "Unauthorized"
+![JWT Authentication Flow](https://www.plantuml.com/plantuml/png/hP2nJiCm48PtFyMDYKG5I4mPK0iiGGm8MfYF-48i73lux5RmzDX9gf1KR4oHBl_Tz_rUiqVdGwj55x-gKXqQ3picDnjiWc-UoUqNuplq-8PCi-4DLXzav1WNwHQihd-TAE31lYi3J_GPY3ra8KOCjdG67J8Vh9EvcE9f-GWgu0MrakW9RXr9CbwXPd7y3Qi5Q4mhcsWST8Hng2fYFgzHwIKckHPm_xg5hOqT85CrZFaww7mgC-jOmEQndDeSb6_w6x5YEc-T-XuK6a99BXUpRLWgarFrroGnKpn5zqQbgQrh1qXotgVQfvmOdcoviuO9CZTuamI97dFnhtQbwLM6x5y-LnUNi3CuFXL9iOwXqEeV)
 
 
 
