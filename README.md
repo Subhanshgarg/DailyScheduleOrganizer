@@ -70,6 +70,48 @@ The JWT is sent back to the client in the response.
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwicm9sZSI6Ik1hbmFnZXIiLCJpYXQiOjE2Mzg5NzQwMDB9.X2n3Vgkqkjl2z5OkLhDxvtuYXs1NlqAn4u0lbnNTnm4"
 }
+```
+## JWT Validation
+
+### 1. Token Extraction
+In order to access protected resources, the client needs to include the JWT in the **Authorization** header of the HTTP request. The format for including the JWT is as follows:
+
+
+### 2. Token Decoding and Validation
+Once the server receives the request, it performs the following steps to validate the JWT:
+
+1. **Extract the JWT**: The server extracts the JWT from the `Authorization` header.
+2. **Decode the JWT**: The JWT is divided into three parts: the header, the payload, and the signature.
+3. **Validate the Signature**: The server uses a secret key (e.g., `JWT_SECRET_KEY`) to validate the signature of the token. This ensures that the token has not been tampered with.
+4. **Check Expiration**: The server checks the `exp` claim in the token to verify if the token has expired. If the current time is greater than the `exp` time, the token is considered invalid, and the server will reject the request.
+5. **Extract Claims**: The server extracts the claims from the payload of the token. Claims usually include the user ID, roles, and any other relevant data.
+
+If the token is valid and the expiration time has not passed, the server proceeds with the request. If the token is invalid or expired, the server returns an **Unauthorized (401)** response, prompting the user to log in again.
+
+---
+
+## Role-Based Access Control (RBAC)
+
+### 1. Role Assignment
+Each user is assigned one or more roles during the authentication process. These roles define what resources the user can access and what actions they are allowed to perform. The roles are embedded in the JWT during the authentication process.
+
+For example, roles might include:
+- `ROLE_USER`: A regular user with basic access to their own data.
+- `ROLE_ADMIN`: An admin user with higher-level access to manage users and view reports.
+- `ROLE_MANAGER`: A manager who can access specific data and manage teams.
+
+### 2. Protecting Endpoints with Roles
+Once a user is authenticated, their roles are included in the JWT. The server uses these roles to authorize access to specific endpoints. Role-based authorization is implemented using the `@PreAuthorize` annotation or `@Secured` annotation in Spring Security.
+
+#### Example:
+
+```java
+@PreAuthorize("hasRole('ROLE_ADMIN')")
+@RequestMapping(value = "/admin/users", method = RequestMethod.GET)
+public List<User> getAllUsers() {
+    return userService.findAllUsers();
+}
+
 
 
 
