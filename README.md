@@ -111,6 +111,55 @@ Once a user is authenticated, their roles are included in the JWT. The server us
 public List<User> getAllUsers() {
     return userService.findAllUsers();
 }
+```
+## JWT Flow
+
+The **JWT (JSON Web Token)** flow is used for authentication and authorization in the Daily Schedule Organizer (DSO) API. Here's the sequence of steps involved in the JWT authentication process:
+
+---
+
+### Steps in JWT Flow
+
+1. **User Login**
+   - The user sends a login request with their **username** and **password** to the `/api/auth/login` endpoint.
+   - If the credentials are correct, the server generates a JWT and returns it in the response.
+
+2. **Token Storage**
+   - The client stores the received JWT token (usually in `localStorage` or `sessionStorage` in a web application).
+
+3. **Token in Request**
+   - For every subsequent request that requires authentication, the client includes the JWT token in the `Authorization` header with the `Bearer` prefix.
+
+4. **Token Validation**
+   - The server validates the JWT by checking its signature and expiration. If valid, the server processes the request and returns the response.
+   - If the JWT is invalid or expired, the server returns an error message.
+
+---
+
+### JWT Flow Sequence Diagram
+
+```plaintext
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant DB as Database
+
+    C->>S: POST /api/auth/login (username, password)
+    S->>DB: Validate credentials (username, password)
+    DB-->>S: Return user data (valid/invalid)
+    S->>C: Generate JWT and send it back
+    C->>C: Store JWT in localStorage or sessionStorage
+
+    C->>S: GET /some-protected-resource (Authorization: Bearer <JWT>)
+    S->>S: Validate JWT (check signature and expiration)
+    S->>DB: Fetch requested data (if token is valid)
+    DB-->>S: Return data
+    S->>C: Return the requested data
+
+    C->>S: GET /some-protected-resource (Authorization: Bearer <invalidJWT>)
+    S->>S: Validate JWT (invalid or expired)
+    S->>C: Return error "Unauthorized"
+
 
 
 
